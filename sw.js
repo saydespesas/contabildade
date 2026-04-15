@@ -1,4 +1,4 @@
-const CACHE_NAME = "saydespesas-financas-supabase-v3";
+const CACHE_NAME = "saydespesas-financas-supabase-v4";
 const URLS_TO_CACHE = [
   "./",
   "./index.html",
