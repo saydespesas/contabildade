@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#b71c1c" />
+  <meta name="theme-color" content="#0b5a94" />
   <title>💰 Finanças Particular • SayDespesas</title>
   <link rel="manifest" href="manifest.json" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     :root{
@@ -35,7 +36,8 @@
       padding:16px;
     }
     .container{max-width:1200px; margin:0 auto;}
-          background:var(--primary);
+    .hero{
+      background:var(--primary);
       color:#fff;
       border-radius:0 0 28px 28px;
       padding:22px 18px 26px;
@@ -50,17 +52,14 @@
     .hero-bar{background:rgba(255,255,255,.85);border-radius:999px;height:10px;}
     .hero-bar-lg{width:78%;max-width:620px;}
     .hero-bar-sm{width:34%;max-width:250px;height:12px;}
-
     .toolbar{
       display:grid;
-      grid-template-columns:1.2fr 1fr 1fr auto auto;
+      grid-template-columns:1fr 1fr auto auto;
       gap:10px;
       margin-top:16px;
       align-items:end;
     }
-    .tabs{
-      display:flex; gap:8px; flex-wrap:wrap; margin:0 0 18px 0;
-    }
+    .tabs{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 18px 0;}
     .tab-btn{
       border:none; cursor:pointer; border-radius:16px; padding:12px 16px;
       background:#fff; color:#243447; box-shadow:var(--shadow); font-weight:700; border:1px solid #edf2f7;
@@ -73,8 +72,8 @@
     .grid-3{grid-template-columns:repeat(3,minmax(0,1fr));}
     .grid-4{grid-template-columns:repeat(4,minmax(0,1fr));}
     .card{
-      background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); border:1px solid #edf2f7;
-      padding:22px;
+      background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
+      border:1px solid #edf2f7; padding:22px;
     }
     .card h3,.card h2{margin:0 0 12px 0;}
     .metric{
@@ -104,6 +103,7 @@
     .btn.secondary{background:#455a64;}
     .btn.green{background:var(--green);}
     .btn.orange{background:var(--orange);}
+    .btn.red{background:var(--red);}
     .btn.ghost{background:#eceff1; color:#263238;}
     .table-wrap{overflow:auto;}
     table{width:100%; border-collapse:collapse; min-width:760px;}
@@ -118,15 +118,12 @@
     .tag.alana{background:#fff3e0; color:#ef6c00;}
     .tag.dep{background:#e3f2fd; color:#1565c0;}
     .tag.rob{background:#ede7f6; color:#4527a0;}
-    .list{
-      display:flex; flex-direction:column; gap:10px;
-    }
+    .list{display:flex; flex-direction:column; gap:10px;}
     .list-item{
       display:grid; grid-template-columns:auto 1fr auto auto; gap:10px; align-items:center;
       padding:12px 14px; border-radius:16px; background:#f8fafc; border:1px solid #edf2f7;
     }
     .muted{color:var(--muted);}
-    .section-title{margin:0 0 10px 0; font-size:18px;}
     .small{font-size:12px;}
     .right{text-align:right;}
     .center{text-align:center;}
@@ -134,21 +131,20 @@
     .pill{
       display:inline-flex; align-items:center; gap:6px;
       padding:8px 12px; border-radius:999px; background:#fff; box-shadow:var(--shadow);
-      font-size:13px; font-weight:700;
+      font-size:13px; font-weight:700; color:#243447;
     }
     .empty{
       border:2px dashed #d4dbe3; border-radius:20px; padding:24px; text-align:center; color:#6b7280;
       background:#f8fafc;
     }
-    .inline-options{
-      display:flex; flex-wrap:wrap; gap:8px; align-items:center;
-    }
+    .inline-options{display:flex; flex-wrap:wrap; gap:8px; align-items:center;}
     .option-chip{
       border:1px solid #d7dde5; border-radius:999px; padding:8px 12px; cursor:pointer;
       background:#fff; font-size:13px; font-weight:700;
     }
     .option-chip.active{background:var(--primary); color:#fff; border-color:var(--primary);}
     .footer-space{height:24px;}
+    .status-line{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;}
     @media (max-width:980px){
       .toolbar, .grid-4, .grid-3, .grid-2, .form-grid{grid-template-columns:1fr 1fr;}
     }
@@ -159,7 +155,7 @@
       .hero-bar-lg{width:82%;}
       .hero-bar-sm{width:42%;}
       .toolbar, .grid-4, .grid-3, .grid-2, .form-grid{grid-template-columns:1fr;}
-      .list-item{grid-template-columns:auto 1fr; }
+      .list-item{grid-template-columns:auto 1fr;}
     }
   </style>
 </head>
@@ -170,7 +166,7 @@
       <div>
         <div class="hero-mini">📱 SayDespesas</div>
         <h1>Finanças Particular</h1>
-        <p>Painel financeiro pessoal com visual mais limpo, mobile e estilo app moderno.</p>
+        <p>Painel financeiro pessoal com Supabase, lançamentos, casal, fixos, parcelados, previsão e calculadora de pagamento do mês.</p>
       </div>
     </div>
 
@@ -181,10 +177,6 @@
 
     <div class="toolbar">
       <div class="field">
-        <label for="filtroMes">Mês de análise</label>
-        <input type="month" id="filtroMes" />
-      </div>
-      <div class="field">
         <label for="saldoBancoInput">Saldo banco (manual)</label>
         <input type="number" step="0.01" id="saldoBancoInput" placeholder="0,00" />
       </div>
@@ -194,6 +186,11 @@
       </div>
       <button class="btn green" onclick="salvarConfigMes()">💾 Salvar mês</button>
       <button class="btn ghost" onclick="exportarJSON()">⬇️ Exportar JSON</button>
+    </div>
+
+    <div class="status-line">
+      <span class="pill">☁️ Supabase online</span>
+      <span class="pill" id="pillMesAtual">📅 Mês: --</span>
     </div>
   </section>
 
@@ -253,8 +250,8 @@
         </div>
 
         <div class="field hidden" id="wrapOutroDescricao">
-          <label>Descrição personalizada</label>
-          <input type="text" id="inpDescricaoOutro" placeholder="Digite a descrição" />
+          <label>Outro (editável)</label>
+          <input type="text" id="inpDescricaoOutro" placeholder="Digite a descrição personalizada" />
         </div>
 
         <div class="field">
@@ -280,7 +277,7 @@
         <div class="field full">
           <label>Referente a</label>
           <div class="inline-options" id="referenteChips"></div>
-          <div class="small muted">Use para indicar se o gasto lançado se refere a Casal, Saymon, Alana ou outro vínculo.</div>
+          <div class="small muted">Marque se a despesa se refere a Casal, Saymon, Alana ou outro vínculo.</div>
         </div>
 
         <div class="field">
@@ -365,7 +362,7 @@
     <div class="grid grid-2" style="margin-top:14px;">
       <div class="card">
         <h3>📌 Calculadora de pagamento do mês</h3>
-        <div class="small muted" style="margin-bottom:10px;">Aqui você marca o que já pagou com base na renda e no saldo informados manualmente. Os compromissos são alimentados automaticamente pelos lançamentos do mês.</div>
+        <div class="small muted" style="margin-bottom:10px;">A calculadora é alimentada automaticamente pelos lançamentos do mês. Você marca aqui o que já foi pago.</div>
         <div id="listaPagamentos" class="list"></div>
       </div>
 
@@ -380,6 +377,7 @@
     <div class="card">
       <h2>🏡 Gastos fixos pré-definidos</h2>
       <div class="small muted" style="margin-bottom:10px;">Cadastre aqui os fixos recorrentes. Depois use “Importar fixos ativos do mês” para gerar os lançamentos do período.</div>
+      <input type="hidden" id="fixoEditId" />
       <div class="form-grid">
         <div class="field">
           <label>Descrição da conta</label>
@@ -414,7 +412,8 @@
         </div>
       </div>
       <div class="actions">
-        <button class="btn" onclick="salvarFixo()">Salvar gasto fixo</button>
+        <button class="btn" id="btnSalvarFixo" onclick="salvarFixo()">Salvar gasto fixo</button>
+        <button class="btn ghost hidden" id="btnCancelarEdicaoFixo" onclick="cancelarEdicaoFixo()">Cancelar edição</button>
       </div>
     </div>
 
@@ -451,18 +450,39 @@
   <section class="panel" id="panel-dados">
     <div class="grid grid-2">
       <div class="card">
-        <h3>📥 Importar JSON</h3>
+        <h3>📅 Dados do mês</h3>
+        <div class="field">
+          <label for="filtroMes">Mês de análise</label>
+          <input type="month" id="filtroMes" />
+        </div>
+        <div class="small muted" style="margin-top:10px;">O mês selecionado alimenta dashboard, lançamentos, casal, calculadora, fixos importados e parcelados.</div>
+      </div>
+
+      <div class="card">
+        <h3>📥 Importar / Exportar</h3>
         <input type="file" id="fileImport" accept=".json" />
         <div class="actions">
           <button class="btn" onclick="importarJSON()">Importar arquivo</button>
+          <button class="btn ghost" onclick="exportarJSON()">Exportar JSON</button>
         </div>
       </div>
+    </div>
+
+    <div class="grid grid-2" style="margin-top:14px;">
       <div class="card">
         <h3>🧹 Limpeza</h3>
         <div class="small muted">Apaga apenas os lançamentos, mantendo fixos e configurações.</div>
         <div class="actions">
           <button class="btn orange" onclick="limparLancamentos()">Limpar lançamentos</button>
           <button class="btn secondary" onclick="restaurarPadraoFixos()">Restaurar fixos padrão</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>☁️ Conexão</h3>
+        <div class="list">
+          <div class="list-item"><div>🔗</div><div>Projeto</div><div class="right"><strong>azltlpjyyqecurmebffm</strong></div></div>
+          <div class="list-item"><div>📡</div><div>Status</div><div class="right"><strong id="statusSupabase">Conectando...</strong></div></div>
         </div>
       </div>
     </div>
@@ -472,7 +492,9 @@
 </div>
 
 <script>
-const STORAGE_KEY = "saydespesas_financas_pro_v1";
+const SUPABASE_URL = "https://azltlpjyyqecurmebffm.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_ODDfIVnGOb1csV9DA8kURQ_pbKPeQNO";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const VINCULOS = [
   "Casal",
@@ -530,7 +552,13 @@ const FIXOS_PADRAO = [
   { id: uid(), nome: "Osirnet", valor: 99.90, dia: 10, meio: "Banrisul", categoria: "Fixos", vinculo: "Casal", ativo: true }
 ];
 
-let state = loadState();
+let state = {
+  entries: [],
+  fixedExpenses: [],
+  monthlyConfig: {},
+  paymentChecks: {}
+};
+
 let referenteSelecionado = "Casal";
 
 function uid() {
@@ -556,43 +584,6 @@ function num(v) {
   return isNaN(n) ? 0 : n;
 }
 
-function loadState() {
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw){
-      return {
-        entries: [],
-        fixedExpenses: FIXOS_PADRAO,
-        monthlyConfig: {},
-        paymentChecks: {}
-      };
-    }
-    const parsed = JSON.parse(raw);
-    return {
-      entries: Array.isArray(parsed.entries) ? parsed.entries : [],
-      fixedExpenses: Array.isArray(parsed.fixedExpenses) && parsed.fixedExpenses.length ? parsed.fixedExpenses : FIXOS_PADRAO,
-      monthlyConfig: parsed.monthlyConfig || {},
-      paymentChecks: parsed.paymentChecks || {}
-    };
-  }catch(e){
-    return {
-      entries: [],
-      fixedExpenses: FIXOS_PADRAO,
-      monthlyConfig: {},
-      paymentChecks: {}
-    };
-  }
-}
-
-function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
-function populateSelect(id, items) {
-  const el = document.getElementById(id);
-  el.innerHTML = items.map(item => `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`).join("");
-}
-
 function escapeHtml(text) {
   return String(text ?? "")
     .replace(/&/g,"&amp;")
@@ -602,7 +593,16 @@ function escapeHtml(text) {
     .replace(/'/g,"&#039;");
 }
 
-function init() {
+function escapeJs(s) {
+  return String(s).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+function populateSelect(id, items) {
+  const el = document.getElementById(id);
+  el.innerHTML = items.map(item => `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`).join("");
+}
+
+async function init() {
   document.getElementById("filtroMes").value = currentMonth();
   document.getElementById("inpData").value = new Date().toISOString().slice(0,10);
 
@@ -616,6 +616,8 @@ function init() {
 
   buildReferenteChips();
   bindEvents();
+  await ensureDefaultFixos();
+  await loadAllFromSupabase();
   refreshUI();
   registerSW();
 }
@@ -640,10 +642,6 @@ function buildReferenteChips() {
   `).join("");
 }
 
-function escapeJs(s) {
-  return String(s).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-}
-
 function selecionarReferente(v) {
   referenteSelecionado = v;
   buildReferenteChips();
@@ -657,18 +655,87 @@ function getMonthlyConfig(month) {
   return state.monthlyConfig[month] || { saldoBanco: 0, rendaMes: 0, previsaoBaseProximoMes: 0 };
 }
 
-function salvarConfigMes() {
+async function ensureDefaultFixos() {
+  const { count, error } = await supabase.from("gastos_fixos").select("*", { count: "exact", head: true });
+  if (error) {
+    setStatusSupabase("Erro");
+    console.error(error);
+    return;
+  }
+  if ((count || 0) > 0) return;
+  await supabase.from("gastos_fixos").insert(FIXOS_PADRAO.map(f => ({
+    id: f.id,
+    nome: f.nome,
+    valor: f.valor,
+    dia: f.dia,
+    meio: f.meio,
+    categoria: f.categoria,
+    vinculo: f.vinculo,
+    ativo: f.ativo
+  })));
+}
+
+async function loadAllFromSupabase() {
+  setStatusSupabase("Carregando...");
+  const [entriesRes, fixedRes, configRes, checksRes] = await Promise.all([
+    supabase.from("lancamentos").select("*").order("data", { ascending: false }),
+    supabase.from("gastos_fixos").select("*").order("nome"),
+    supabase.from("config_mensal").select("*"),
+    supabase.from("pagamentos_mes").select("*")
+  ]);
+
+  if (entriesRes.error || fixedRes.error || configRes.error || checksRes.error) {
+    console.error(entriesRes.error || fixedRes.error || configRes.error || checksRes.error);
+    setStatusSupabase("Erro");
+    alert("Erro ao carregar dados do Supabase. Verifique se as tabelas foram criadas.");
+    return;
+  }
+
+  state.entries = (entriesRes.data || []).map(normalizeEntry);
+  state.fixedExpenses = (fixedRes.data || []);
+  state.monthlyConfig = {};
+  (configRes.data || []).forEach(row => {
+    state.monthlyConfig[row.month_key] = {
+      saldoBanco: num(row.saldo_banco),
+      rendaMes: num(row.renda_mes),
+      previsaoBaseProximoMes: num(row.previsao_base_proximo_mes)
+    };
+  });
+
+  state.paymentChecks = {};
+  (checksRes.data || []).forEach(row => {
+    state.paymentChecks[row.month_key] = state.paymentChecks[row.month_key] || {};
+    state.paymentChecks[row.month_key][row.item_key] = !!row.pago;
+  });
+
+  setStatusSupabase("Online");
+}
+
+function setStatusSupabase(txt) {
+  const el = document.getElementById("statusSupabase");
+  if (el) el.textContent = txt;
+}
+
+async function salvarConfigMes() {
   const month = selectedMonth();
   const saldoBanco = num(document.getElementById("saldoBancoInput").value);
   const rendaMes = num(document.getElementById("rendaMesInput").value);
-  const atual = getMonthlyConfig(month);
-  state.monthlyConfig[month] = {
-    ...atual,
-    saldoBanco,
-    rendaMes,
-    previsaoBaseProximoMes: atual.previsaoBaseProximoMes || rendaMes
-  };
-  saveState();
+  const previsaoBaseProximoMes = rendaMes;
+
+  const { error } = await supabase.from("config_mensal").upsert({
+    month_key: month,
+    saldo_banco: saldoBanco,
+    renda_mes: rendaMes,
+    previsao_base_proximo_mes: previsaoBaseProximoMes
+  });
+
+  if (error) {
+    alert("Erro ao salvar configuração do mês.");
+    console.error(error);
+    return;
+  }
+
+  state.monthlyConfig[month] = { saldoBanco, rendaMes, previsaoBaseProximoMes };
   refreshUI();
   alert("Configurações do mês salvas.");
 }
@@ -702,7 +769,7 @@ function limparFormulario() {
   buildReferenteChips();
 }
 
-function salvarLancamento() {
+async function salvarLancamento() {
   const data = document.getElementById("inpData").value;
   const categoria = document.getElementById("inpCategoria").value;
   const descricaoBase = document.getElementById("inpDescricaoBase").value;
@@ -727,36 +794,70 @@ function salvarLancamento() {
 
   const descricao = descricaoBase === "Outro (editável)" ? (descricaoOutro || "Outro") : descricaoBase;
 
-  state.entries.unshift({
+  const payload = {
     id: uid(),
     data,
     mes: monthKey(data),
     categoria,
     descricao,
     valor,
-    meioPagamento,
+    meio_pagamento: meioPagamento,
     vinculo,
     referente: referenteSelecionado || vinculo,
     observacao,
     parcelado,
-    parcelaAtual: parcelado ? parcelaAtual : 0,
-    parcelaTotal: parcelado ? parcelaTotal : 0,
-    importedFromFixed: false
-  });
+    parcela_atual: parcelado ? parcelaAtual : 0,
+    parcela_total: parcelado ? parcelaTotal : 0,
+    imported_from_fixed: false,
+    fixed_id: null
+  };
 
-  saveState();
+  const { error, data: inserted } = await supabase.from("lancamentos").insert(payload).select().single();
+  if (error) {
+    alert("Erro ao salvar lançamento.");
+    console.error(error);
+    return;
+  }
+
+  state.entries.unshift(normalizeEntry(inserted));
   limparFormulario();
   refreshUI();
 }
 
-function deleteLancamento(id) {
+function normalizeEntry(row) {
+  return {
+    id: row.id,
+    data: row.data,
+    mes: row.mes,
+    categoria: row.categoria,
+    descricao: row.descricao,
+    valor: num(row.valor),
+    meioPagamento: row.meio_pagamento,
+    vinculo: row.vinculo,
+    referente: row.referente,
+    observacao: row.observacao,
+    parcelado: !!row.parcelado,
+    parcelaAtual: num(row.parcela_atual),
+    parcelaTotal: num(row.parcela_total),
+    importedFromFixed: !!row.imported_from_fixed,
+    fixedId: row.fixed_id
+  };
+}
+
+async function deleteLancamento(id) {
   if(!confirm("Excluir este lançamento?")) return;
+  const { error } = await supabase.from("lancamentos").delete().eq("id", id);
+  if (error) {
+    alert("Erro ao excluir lançamento.");
+    console.error(error);
+    return;
+  }
   state.entries = state.entries.filter(e => e.id !== id);
-  saveState();
   refreshUI();
 }
 
-function salvarFixo() {
+async function salvarFixo() {
+  const editId = document.getElementById("fixoEditId").value;
   const nome = document.getElementById("fixoNome").value.trim();
   const valor = num(document.getElementById("fixoValor").value);
   const dia = num(document.getElementById("fixoDia").value);
@@ -770,76 +871,161 @@ function salvarFixo() {
     return;
   }
 
-  state.fixedExpenses.unshift({ id: uid(), nome, valor, dia, meio, categoria, vinculo, ativo });
-  saveState();
+  const payload = { id: editId || uid(), nome, valor, dia, meio, categoria, vinculo, ativo };
+
+  if (editId) {
+    const { error, data } = await supabase.from("gastos_fixos").update(payload).eq("id", editId).select().single();
+    if (error) {
+      alert("Erro ao atualizar gasto fixo.");
+      console.error(error);
+      return;
+    }
+    state.fixedExpenses = state.fixedExpenses.map(f => f.id === editId ? data : f);
+    alert("Gasto fixo atualizado.");
+  } else {
+    const { error, data } = await supabase.from("gastos_fixos").insert(payload).select().single();
+    if (error) {
+      alert("Erro ao salvar gasto fixo.");
+      console.error(error);
+      return;
+    }
+    state.fixedExpenses.unshift(data);
+    alert("Gasto fixo salvo.");
+  }
+
+  limparFormularioFixo();
+  refreshUI();
+}
+
+function editarFixo(id) {
+  const fixo = state.fixedExpenses.find(f => f.id === id);
+  if (!fixo) return;
+  document.getElementById("fixoEditId").value = fixo.id;
+  document.getElementById("fixoNome").value = fixo.nome || "";
+  document.getElementById("fixoValor").value = fixo.valor || "";
+  document.getElementById("fixoDia").value = fixo.dia || "";
+  document.getElementById("fixoMeio").value = fixo.meio || MEIOS_PAGAMENTO[0];
+  document.getElementById("fixoCategoria").value = fixo.categoria || CATEGORIAS[0];
+  document.getElementById("fixoVinculo").value = fixo.vinculo || VINCULOS[0];
+  document.getElementById("fixoAtivo").value = String(!!fixo.ativo);
+  document.getElementById("btnSalvarFixo").textContent = "Atualizar gasto fixo";
+  document.getElementById("btnCancelarEdicaoFixo").classList.remove("hidden");
+  document.getElementById("panel-fixos").scrollIntoView({behavior:"smooth"});
+}
+
+function cancelarEdicaoFixo() {
+  limparFormularioFixo();
+}
+
+function limparFormularioFixo() {
+  document.getElementById("fixoEditId").value = "";
   document.getElementById("fixoNome").value = "";
   document.getElementById("fixoValor").value = "";
   document.getElementById("fixoDia").value = "";
-  refreshUI();
+  document.getElementById("fixoMeio").value = MEIOS_PAGAMENTO[0];
+  document.getElementById("fixoCategoria").value = CATEGORIAS[0];
+  document.getElementById("fixoVinculo").value = VINCULOS[0];
+  document.getElementById("fixoAtivo").value = "true";
+  document.getElementById("btnSalvarFixo").textContent = "Salvar gasto fixo";
+  document.getElementById("btnCancelarEdicaoFixo").classList.add("hidden");
 }
 
-function deleteFixo(id) {
+async function deleteFixo(id) {
   if(!confirm("Excluir gasto fixo?")) return;
+  const { error } = await supabase.from("gastos_fixos").delete().eq("id", id);
+  if (error) {
+    alert("Erro ao excluir gasto fixo.");
+    console.error(error);
+    return;
+  }
   state.fixedExpenses = state.fixedExpenses.filter(f => f.id !== id);
-  saveState();
   refreshUI();
 }
 
-function importarFixosMes() {
+async function importarFixosMes() {
   const month = selectedMonth();
   const [ano, mes] = month.split("-");
-  const novos = [];
-  state.fixedExpenses.filter(f => f.ativo).forEach(fixo => {
+  const ativos = state.fixedExpenses.filter(f => f.ativo);
+  const novosPayloads = [];
+
+  ativos.forEach(fixo => {
     const data = `${ano}-${mes}-${String(fixo.dia).padStart(2,"0")}`;
     const jaExiste = state.entries.some(e =>
       e.importedFromFixed &&
       e.fixedId === fixo.id &&
       e.mes === month
     );
-    if(!jaExiste) {
-      novos.push({
+    if (!jaExiste) {
+      novosPayloads.push({
         id: uid(),
         data,
         mes: month,
         categoria: fixo.categoria,
         descricao: fixo.nome,
         valor: fixo.valor,
-        meioPagamento: fixo.meio,
+        meio_pagamento: fixo.meio,
         vinculo: fixo.vinculo,
         referente: fixo.vinculo,
         observacao: "Importado de gasto fixo",
         parcelado: false,
-        parcelaAtual: 0,
-        parcelaTotal: 0,
-        importedFromFixed: true,
-        fixedId: fixo.id
+        parcela_atual: 0,
+        parcela_total: 0,
+        imported_from_fixed: true,
+        fixed_id: fixo.id
       });
     }
   });
 
-  if(!novos.length) {
+  if (!novosPayloads.length) {
     alert("Os fixos ativos deste mês já foram importados.");
     return;
   }
 
-  state.entries = [...novos, ...state.entries];
-  saveState();
+  const { error, data } = await supabase.from("lancamentos").insert(novosPayloads).select();
+  if (error) {
+    alert("Erro ao importar fixos do mês.");
+    console.error(error);
+    return;
+  }
+
+  state.entries = [...(data || []).map(normalizeEntry), ...state.entries];
   refreshUI();
   alert("Fixos importados para o mês selecionado.");
 }
 
-function limparLancamentos() {
+async function limparLancamentos() {
   if(!confirm("Apagar todos os lançamentos?")) return;
+  const { error } = await supabase.from("lancamentos").delete().neq("id", "");
+  if (error) {
+    alert("Erro ao apagar lançamentos.");
+    console.error(error);
+    return;
+  }
   state.entries = [];
   state.paymentChecks = {};
-  saveState();
+  await supabase.from("pagamentos_mes").delete().neq("month_key", "");
   refreshUI();
 }
 
-function restaurarPadraoFixos() {
+async function restaurarPadraoFixos() {
   if(!confirm("Restaurar lista padrão de fixos?")) return;
-  state.fixedExpenses = FIXOS_PADRAO.map(x => ({...x, id: uid()}));
-  saveState();
+  await supabase.from("gastos_fixos").delete().neq("id", "");
+  const { error, data } = await supabase.from("gastos_fixos").insert(FIXOS_PADRAO.map(f => ({
+    id: uid(),
+    nome: f.nome,
+    valor: f.valor,
+    dia: f.dia,
+    meio: f.meio,
+    categoria: f.categoria,
+    vinculo: f.vinculo,
+    ativo: f.ativo
+  }))).select();
+  if (error) {
+    alert("Erro ao restaurar fixos padrão.");
+    console.error(error);
+    return;
+  }
+  state.fixedExpenses = data || [];
   refreshUI();
 }
 
@@ -860,19 +1046,64 @@ function importarJSON() {
     return;
   }
   const reader = new FileReader();
-  reader.onload = function(ev) {
+  reader.onload = async function(ev) {
     try {
       const parsed = JSON.parse(ev.target.result);
-      state = {
-        entries: Array.isArray(parsed.entries) ? parsed.entries : [],
-        fixedExpenses: Array.isArray(parsed.fixedExpenses) ? parsed.fixedExpenses : FIXOS_PADRAO,
-        monthlyConfig: parsed.monthlyConfig || {},
-        paymentChecks: parsed.paymentChecks || {}
-      };
-      saveState();
+      if (Array.isArray(parsed.fixedExpenses)) {
+        await supabase.from("gastos_fixos").delete().neq("id", "");
+        if (parsed.fixedExpenses.length) {
+          await supabase.from("gastos_fixos").insert(parsed.fixedExpenses);
+        }
+      }
+      if (Array.isArray(parsed.entries)) {
+        await supabase.from("lancamentos").delete().neq("id", "");
+        if (parsed.entries.length) {
+          const payload = parsed.entries.map(e => ({
+            id: e.id || uid(),
+            data: e.data,
+            mes: e.mes,
+            categoria: e.categoria,
+            descricao: e.descricao,
+            valor: e.valor,
+            meio_pagamento: e.meioPagamento || e.meio_pagamento,
+            vinculo: e.vinculo,
+            referente: e.referente,
+            observacao: e.observacao,
+            parcelado: !!e.parcelado,
+            parcela_atual: e.parcelaAtual || e.parcela_atual || 0,
+            parcela_total: e.parcelaTotal || e.parcela_total || 0,
+            imported_from_fixed: !!(e.importedFromFixed || e.imported_from_fixed),
+            fixed_id: e.fixedId || e.fixed_id || null
+          }));
+          await supabase.from("lancamentos").insert(payload);
+        }
+      }
+      if (parsed.monthlyConfig) {
+        await supabase.from("config_mensal").delete().neq("month_key", "");
+        const cfgs = Object.entries(parsed.monthlyConfig).map(([k,v]) => ({
+          month_key: k,
+          saldo_banco: v.saldoBanco || v.saldo_banco || 0,
+          renda_mes: v.rendaMes || v.renda_mes || 0,
+          previsao_base_proximo_mes: v.previsaoBaseProximoMes || v.previsao_base_proximo_mes || 0
+        }));
+        if (cfgs.length) await supabase.from("config_mensal").insert(cfgs);
+      }
+      if (parsed.paymentChecks) {
+        await supabase.from("pagamentos_mes").delete().neq("month_key", "");
+        const rows = [];
+        Object.entries(parsed.paymentChecks).forEach(([month, obj]) => {
+          Object.entries(obj || {}).forEach(([key, pago]) => {
+            rows.push({ month_key: month, item_key: key, pago: !!pago });
+          });
+        });
+        if (rows.length) await supabase.from("pagamentos_mes").insert(rows);
+      }
+
+      await loadAllFromSupabase();
       refreshUI();
-      alert("Dados importados com sucesso.");
+      alert("Dados importados com sucesso para o Supabase.");
     } catch(e) {
+      console.error(e);
       alert("Arquivo JSON inválido.");
     }
   };
@@ -886,14 +1117,12 @@ function getEntriesMonth(month) {
 function getMonthlyTotals(month) {
   const entries = getEntriesMonth(month);
   const config = getMonthlyConfig(month);
-
   const totalLancado = entries.reduce((s,e) => s + num(e.valor), 0);
   const totalCasal = entries.filter(e => e.referente === "Casal" || e.vinculo === "Casal").reduce((s,e)=>s+num(e.valor),0);
   const totalPagoCalc = getCalculatorSummary(month).totalPago;
   const faltaPagar = getCalculatorSummary(month).faltaPagar;
   const parceladosAbertos = entries.filter(e => e.parcelado && e.parcelaAtual < e.parcelaTotal);
   const abertoParcelado = parceladosAbertos.reduce((s,e)=> s + num(e.valor),0);
-
   return { entries, config, totalLancado, totalCasal, totalPagoCalc, faltaPagar, abertoParcelado, parceladosAbertos };
 }
 
@@ -914,7 +1143,6 @@ function renderDashboard() {
     {label:"✅ Total pago", value:toBRL(totals.totalPagoCalc), cls:"green"},
     {label:"🔴 Falta pagar", value:toBRL(totals.faltaPagar), cls:"blue"}
   ];
-
   document.getElementById("dashboardCards").innerHTML = cards.map(c => `
     <div class="metric ${c.cls}">
       <span class="label">${c.label}</span>
@@ -1004,7 +1232,6 @@ function renderCasal() {
   const month = selectedMonth();
   const entries = getEntriesMonth(month);
   const casalEntries = entries.filter(e => (e.referente || e.vinculo) === "Casal");
-
   const alimentacao = casalEntries.filter(e => ["Alimentação","Higiene"].includes(e.categoria)).reduce((s,e)=>s+num(e.valor),0);
   const combustivel = casalEntries.filter(e => e.categoria === "Combutível").reduce((s,e)=>s+num(e.valor),0);
   const fixos = casalEntries.filter(e => e.categoria === "Fixos").reduce((s,e)=>s+num(e.valor),0);
@@ -1044,12 +1271,8 @@ function getCalculatorItems(month) {
   const groupingMethods = ["Mercado Pago","C6 Bank","Banrisul","Bradesco","Cartão Carrefour"];
   const groups = {};
   entries.forEach(e => {
-    const key = groupingMethods.includes(e.meioPagamento)
-      ? `cartao|${e.meioPagamento}`
-      : `item|${e.descricao}`;
-    const label = groupingMethods.includes(e.meioPagamento)
-      ? e.meioPagamento
-      : e.descricao;
+    const key = groupingMethods.includes(e.meioPagamento) ? `cartao|${e.meioPagamento}` : `item|${e.descricao}`;
+    const label = groupingMethods.includes(e.meioPagamento) ? e.meioPagamento : e.descricao;
     groups[key] = groups[key] || { key, label, total: 0, source: groupingMethods.includes(e.meioPagamento) ? "Meio de pagamento" : "Descrição da conta" };
     groups[key].total += num(e.valor);
   });
@@ -1061,19 +1284,27 @@ function getCalculatorSummary(month) {
   const checks = state.paymentChecks[month] || {};
   const totalPago = items.filter(i => checks[i.key]).reduce((s,i)=>s+i.total,0);
   const totalGeral = items.reduce((s,i)=>s+i.total,0);
-  return {
-    items,
-    totalPago,
-    totalGeral,
-    faltaPagar: Math.max(totalGeral - totalPago, 0)
-  };
+  return { items, totalPago, totalGeral, faltaPagar: Math.max(totalGeral - totalPago, 0) };
 }
 
-function togglePagamentoCalc(key) {
+async function togglePagamentoCalc(key) {
   const month = selectedMonth();
+  const current = !!((state.paymentChecks[month] || {})[key]);
   state.paymentChecks[month] = state.paymentChecks[month] || {};
-  state.paymentChecks[month][key] = !state.paymentChecks[month][key];
-  saveState();
+  state.paymentChecks[month][key] = !current;
+
+  const { error } = await supabase.from("pagamentos_mes").upsert({
+    month_key: month,
+    item_key: key,
+    pago: !current
+  });
+
+  if (error) {
+    alert("Erro ao atualizar pagamento.");
+    console.error(error);
+    state.paymentChecks[month][key] = current;
+    return;
+  }
   refreshUI();
 }
 
@@ -1124,7 +1355,12 @@ function renderFixos() {
       <td>${escapeHtml(f.categoria)}</td>
       <td><span class="tag ${getVinculoTagClass(f.vinculo)}">${escapeHtml(f.vinculo)}</span></td>
       <td>${f.ativo ? "Ativo" : "Inativo"}</td>
-      <td><button class="btn ghost" onclick="deleteFixo('${escapeJs(f.id)}')">Excluir</button></td>
+      <td>
+        <div class="actions">
+          <button class="btn ghost" onclick="editarFixo('${escapeJs(f.id)}')">Editar</button>
+          <button class="btn red" onclick="deleteFixo('${escapeJs(f.id)}')">Excluir</button>
+        </div>
+      </td>
     </tr>
   `).join("") : `<tr><td colspan="8" class="center muted">Sem gastos fixos cadastrados.</td></tr>`;
 }
@@ -1179,6 +1415,8 @@ function refreshConfigFields() {
 }
 
 function refreshUI() {
+  const mes = selectedMonth();
+  document.getElementById("pillMesAtual").textContent = `📅 Mês: ${mes}`;
   refreshConfigFields();
   renderDashboard();
   renderLancamentos();
